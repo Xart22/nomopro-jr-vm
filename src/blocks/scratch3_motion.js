@@ -9,12 +9,14 @@ class Scratch3MotionBlocks {
          * @type {Runtime}
          */
         this.runtime = runtime;
+        this.speed = 0.3;
     }
 
     /**
      * Retrieve the block primitives implemented by this package.
      * @return {object.<string, Function>} Mapping of opcode to Function.
      */
+
     getPrimitives() {
         return {
             motion_movesteps: this.moveSteps,
@@ -43,7 +45,17 @@ class Scratch3MotionBlocks {
             motion_align_scene: () => {},
             motion_xscroll: () => {},
             motion_yscroll: () => {},
+            motion_moveright: this.moveStepsToRight,
+            motion_moveleft: this.moveStepsToLeft,
+            motion_moveup: this.moveStepsToUp,
+            motion_movedown: this.moveStepsToDown,
+            motion_go_home: this.home,
+            motion_hop: this.hop,
         };
+    }
+
+    setSpeed(args) {
+        this.speed = args.SPEED;
     }
 
     getMonitored() {
@@ -62,6 +74,20 @@ class Scratch3MotionBlocks {
             },
         };
     }
+    reset(util) {
+        if (util.target.x >= 240) {
+            util.target.setXY(-238, util.target.y);
+        }
+        if (util.target.x <= -240) {
+            util.target.setXY(238, util.target.y);
+        }
+        if (util.target.y >= 180) {
+            util.target.setXY(util.target.x, -178);
+        }
+        if (util.target.y <= -180) {
+            util.target.setXY(util.target.x, 178);
+        }
+    }
 
     moveSteps(args, util) {
         const steps = Cast.toNumber(args.STEPS + 0);
@@ -69,20 +95,55 @@ class Scratch3MotionBlocks {
         const dx = steps * Math.cos(radians);
         const dy = steps * Math.sin(radians);
         util.target.setXY(util.target.x + dx, util.target.y + dy);
+        console.log(util.target);
     }
     moveStepsToRight(args, util) {
-        const steps = Cast.toNumber(args.STEPS + 0);
-        const radians = MathUtil.degToRad(90 - util.target.direction);
-        const dx = steps * Math.cos(radians);
-        const dy = steps * Math.sin(radians);
-        util.target.setXY(util.target.x + dx, util.target.y + dy);
+        console.log(this.speed);
+        const steps = Cast.toNumber(args.STEPS + 0) + 30;
+        this.glide(
+            { X: util.target.x + steps, Y: util.target.y, SECS: 0.3 },
+            util,
+            "Glide"
+        );
+        //util.target.setXY(util.target.x + dx, util.target.y + dy);
     }
     moveStepsToLeft(args, util) {
-        const steps = Cast.toNumber("-" + args.STEPS + 0);
-        const radians = MathUtil.degToRad(90 - util.target.direction);
-        const dx = steps * Math.cos(radians);
-        const dy = steps * Math.sin(radians);
-        util.target.setXY(util.target.x + dx, util.target.y + dy);
+        const steps = Cast.toNumber("-" + args.STEPS + 0) + -30;
+        this.glide(
+            { X: util.target.x + steps, Y: util.target.y, SECS: 0.3 },
+            util,
+            "Glide"
+        );
+    }
+
+    moveStepsToUp(args, util) {
+        const steps = Cast.toNumber(args.STEPS + 0) + 30;
+        this.glide(
+            { X: util.target.x, Y: util.target.y + steps, SECS: 0.3 },
+            util,
+            "Glide"
+        );
+    }
+
+    moveStepsToDown(args, util) {
+        const steps = Cast.toNumber("-" + args.STEPS + 0) + -30;
+        this.glide(
+            { X: util.target.x, Y: util.target.y + steps, SECS: 0.3 },
+            util,
+            "Glide"
+        );
+    }
+
+    hop(args, util) {
+        const steps = Cast.toNumber(args.STEPS + 0) + 30;
+        this.glide(
+            { X: util.target.x, Y: util.target.y + steps, SECS: 0.3 },
+            util,
+            "Hop"
+        );
+    }
+    home(args, util) {
+        util.target.setXY(0, 0);
     }
 
     goToXY(args, util) {
@@ -120,13 +181,33 @@ class Scratch3MotionBlocks {
     }
 
     turnRight(args, util) {
-        const degrees = Cast.toNumber(args.DEGREES);
-        util.target.setDirection(util.target.direction + degrees);
+        if (util.stackTimerNeedsInit()) {
+            const duration = Math.max(0, 1000 * 0.1);
+
+            util.startStackTimer(duration);
+            const degrees = Cast.toNumber(args.DEGREES + 0) + 10;
+            util.target.setDirection(util.target.direction + degrees);
+            this.reset(util);
+            this.runtime.requestRedraw();
+            util.yield();
+        } else if (!util.stackTimerFinished()) {
+            util.yield();
+        }
     }
 
     turnLeft(args, util) {
-        const degrees = Cast.toNumber(args.DEGREES);
-        util.target.setDirection(util.target.direction - degrees);
+        if (util.stackTimerNeedsInit()) {
+            const duration = Math.max(0, 1000 * 0.1);
+
+            util.startStackTimer(duration);
+            const degrees = Cast.toNumber(args.DEGREES + 0) + 10;
+            util.target.setDirection(util.target.direction - degrees);
+            this.reset(util);
+            this.runtime.requestRedraw();
+            util.yield();
+        } else if (!util.stackTimerFinished()) {
+            util.yield();
+        }
     }
 
     pointInDirection(args, util) {
@@ -159,7 +240,12 @@ class Scratch3MotionBlocks {
         util.target.setDirection(direction);
     }
 
-    glide(args, util) {
+    resetGlide(x, y, util) {
+        util.target.setXY(x, y + 50);
+        util.target.setXY(x, y);
+    }
+
+    glide(args, util, dir) {
         if (util.stackFrame.timer) {
             const timeElapsed = util.stackFrame.timer.timeElapsed();
             if (timeElapsed < util.stackFrame.duration * 1000) {
@@ -177,6 +263,16 @@ class Scratch3MotionBlocks {
             } else {
                 // Finished: move to final position.
                 util.target.setXY(util.stackFrame.endX, util.stackFrame.endY);
+                if (dir === "Hop") {
+                    this.resetGlide(
+                        util.stackFrame.startX,
+                        util.stackFrame.startY,
+                        util
+                    );
+                }
+                if (dir === "Glide") {
+                    this.reset(util);
+                }
             }
         } else {
             // First time: save data for future use.
