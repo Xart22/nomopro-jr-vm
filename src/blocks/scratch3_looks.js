@@ -357,7 +357,24 @@ class Scratch3LooksBlocks {
             looks_size: this.getSize,
             looks_costumenumbername: this.getCostumeNumberName,
             looks_backdropnumbername: this.getBackdropNumberName,
+            looks_grow: this.looksGrow,
+            looks_shirink: this.looksShrink,
+            looks_reset_size: this.looksResetSize,
         };
+    }
+
+    looksResetSize(args, util) {
+        util.target.setSize(100);
+    }
+
+    looksGrow(args, util) {
+        const change = Cast.toNumber(args.SIZE);
+        util.target.setSize(util.target.size + change);
+    }
+
+    looksShrink(args, util) {
+        const change = Cast.toNumber(args.SIZE);
+        util.target.setSize(util.target.size - change);
     }
 
     getMonitored() {
