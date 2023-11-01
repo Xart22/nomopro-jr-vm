@@ -27,6 +27,14 @@ const PNPID_LIST = [
     "USB\\VID_1A86&PID_7523",
 ];
 
+const FITER_DEVICE = [
+    { usbVendorId: 0x2341, usbProductId: 0x0043 },
+    { usbVendorId: 0x2341, usbProductId: 0x0001 },
+    { usbVendorId: 0x2a03, usbProductId: 0x0043 },
+    { usbVendorId: 0x2341, usbProductId: 0x0243 },
+    { usbVendorId: 0x1a86, usbProductId: 0x7523 },
+];
+
 /**
  * Configuration of serialport
  * @readonly
@@ -146,7 +154,8 @@ class ArduinoUno extends ArduinoPeripheral {
             originalDeviceId,
             PNPID_LIST,
             SERIAL_CONFIG,
-            DIVECE_OPT
+            DIVECE_OPT,
+            FITER_DEVICE
         );
     }
 }

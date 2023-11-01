@@ -6,6 +6,7 @@ const Base64Util = require("../../util/base64-util");
 
 const Firmata = require("../../lib/firmata/firmata");
 const Motor = require("../../lib/firmata/motor");
+const WebSerialPort = require("../../io/webserialport");
 
 /**
  * A string to report connect firmata timeout.
@@ -70,7 +71,8 @@ class ArduinoPeripheral {
         originalDeviceId,
         pnpidList,
         serialConfig,
-        diveceOpt
+        diveceOpt,
+        filters
     ) {
         /**
          * The OpenBlock runtime used to trigger the green flag button.
@@ -78,7 +80,7 @@ class ArduinoPeripheral {
          * @private
          */
         this._runtime = runtime;
-
+        this.filters = filters;
         this.pnpidList = pnpidList;
         this.serialConfig = serialConfig;
         this.diveceOpt = diveceOpt;
@@ -206,21 +208,14 @@ class ArduinoPeripheral {
         if (this._serialport) {
             this._serialport.disconnect();
         }
-        this._serialport = new Serialport(
+        this._serialport = new WebSerialPort(
             this._runtime,
             this._originalDeviceId,
-            {
-                filters: {
-                    pnpid: listAll
-                        ? ["*"]
-                        : pnpidList
-                        ? pnpidList
-                        : this.pnpidList,
-                },
-            },
+            this.filters,
             this._onConnect,
             this.reset
         );
+        this._serialport.scan();
     }
 
     /**

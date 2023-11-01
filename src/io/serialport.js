@@ -45,19 +45,22 @@ class Serialport extends JSONRPC {
      * If the web socket is not yet open, request when the socket promise resolves.
      */
     requestPeripheral() {
-        this._availablePeripherals = {};
-        if (this._discoverTimeoutID) {
-            window.clearTimeout(this._discoverTimeoutID);
-        }
-        this._discoverTimeoutID = window.setTimeout(
-            this._handleDiscoverTimeout.bind(this),
-            15000
-        );
-        this.sendRemoteRequest("discover", this._peripheralOptions).catch(
-            (e) => {
-                this._handleRequestError(e);
-            }
-        );
+        // this._availablePeripherals = {};
+        // if (this._discoverTimeoutID) {
+        //     window.clearTimeout(this._discoverTimeoutID);
+        // }
+        // this._discoverTimeoutID = window.setTimeout(
+        //     this._handleDiscoverTimeout.bind(this),
+        //     15000
+        // );
+        // this.sendRemoteRequest("discover", this._peripheralOptions).catch(
+        //     (e) => {
+        //         this._handleRequestError(e);
+        //     }
+        // );
+
+        // serialport web api
+        navigator.serial.getPorts();
     }
 
     /**
