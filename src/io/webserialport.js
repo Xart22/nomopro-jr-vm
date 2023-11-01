@@ -3,45 +3,51 @@ class WebSerialPort {
         runtime,
         deviceId,
         peripheralOptions,
-        connectCallback = null,
-        resetCallback = null
+        serialConfig,
+        connectCallback,
+        resetCallback
     ) {
-        this.port = null;
-        this.reader = null;
+        this._runtime = runtime;
+        this.port;
+        this.reader;
         this.inputDone = false;
         this.outputDone = false;
         this.baudRate;
-        this.readLoop = this.readLoop.bind(this);
         this.peripheralOptions = peripheralOptions;
+        this.serialConfig = serialConfig;
+        this._connectCallback = connectCallback;
     }
 
     async scan() {
-        console.log("Requesting port");
-        console.log(this.peripheralOptions);
-        const port = await navigator.serial.requestPort();
-
-        console.log(port);
-        return port;
-    }
-
-    async connect() {
-        console.log("Requesting port");
-        this.port = await navigator.serial.requestPort({
-            filters: [this.peripheralOptions],
-        });
-        await this.port.open({ baudRate: 115200 });
-        this.reader = this.port.readable.getReader();
-        this.readLoop();
-    }
-
-    async readLoop() {
-        while (true) {
-            const { value, done } = await this.reader.read();
-            if (done) {
-                this.reader.releaseLock();
-                break;
+        try {
+            const filters = this.peripheralOptions;
+            const serialConfig = this.serialConfig;
+            const port = await navigator.serial.requestPort({ filters });
+            await port.open({ baudRate: serialConfig.baudRate });
+            const reader = port.readable.getReader();
+            this.readData(reader);
+            console.log(this._runtime);
+            this._runtime.emit(this._runtime.constructor.PERIPHERAL_CONNECTED);
+            if (this._connectCallback) {
+                this._connectCallback();
             }
-            console.log(value);
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+    async readData(reader) {
+        while (true) {
+            try {
+                const { value, done } = await reader.read();
+                if (done) {
+                    reader.releaseLock();
+                    break;
+                }
+                console.log("Menerima data:", value);
+            } catch (error) {
+                console.error("Gagal membaca data:", error);
+            }
         }
     }
 

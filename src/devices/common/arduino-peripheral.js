@@ -212,6 +212,7 @@ class ArduinoPeripheral {
             this._runtime,
             this._originalDeviceId,
             this.filters,
+            this.serialConfig,
             this._onConnect,
             this.reset
         );
